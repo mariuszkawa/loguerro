@@ -24,6 +24,9 @@
 
 package com.codigeria.loguerro;
 
+import com.codigeria.loguerro.engine.Engine;
+import com.codigeria.loguerro.engine.EngineException;
+import com.codigeria.loguerro.engine.FlinkEngine;
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,28 +35,43 @@ import java.lang.invoke.MethodHandles;
 import java.util.Collections;
 import java.util.List;
 
-import static java.util.Objects.requireNonNull;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 final class LoguerroCliRunner
 {
-    private final Logger logger;
+    private static final String DEFAULT_ENGINE_NAME = "Loguerro Streaming Engine";
+    private static final String DEFAULT_FILE_PATH = "logfile.log";
 
     private final List<String> arguments;
 
+    private final Engine engine;
+
+    private final Logger logger;
+
     LoguerroCliRunner(List<String> arguments)
     {
-        this(arguments, LoggerFactory.getLogger(MethodHandles.lookup().lookupClass()));
+        this(
+                arguments,
+                new FlinkEngine(new FlinkEngine.ConfigurationImpl(DEFAULT_ENGINE_NAME, DEFAULT_FILE_PATH)),
+                LoggerFactory.getLogger(MethodHandles.lookup().lookupClass())
+        );
     }
 
     @VisibleForTesting
-    LoguerroCliRunner(List<String> arguments, Logger logger)
+    LoguerroCliRunner(List<String> arguments, Engine engine, Logger logger)
     {
-        this.arguments = Collections.unmodifiableList(requireNonNull(arguments));
-        this.logger = logger;
+        this.arguments = Collections.unmodifiableList(checkNotNull(arguments));
+         this.engine = checkNotNull(engine);
+        this.logger = checkNotNull(logger);
     }
 
     void run()
     {
         logger.debug("Running CLI runner...");
+        try {
+            engine.run();
+        } catch (EngineException e) {
+            logger.error("An exception caught while running the Loguerro engine", e);
+        }
     }
 }

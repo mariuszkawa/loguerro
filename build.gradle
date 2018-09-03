@@ -1,0 +1,26 @@
+plugins {
+    id 'java'
+}
+
+group 'com.codigeria.loguerro'
+version '0.0.1-SNAPSHOT'
+
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile 'com.google.guava:guava:26.0-jre'
+    compile 'org.slf4j:slf4j-api:1.7.25'
+    compile 'ch.qos.logback:logback-classic:1.2.3'
+
+    testCompile 'org.junit.jupiter:junit-jupiter-api:5.2.0'
+    testCompile 'org.mockito:mockito-core:2.21.0'
+    testCompile 'org.mockito:mockito-junit-jupiter:2.21.0'
+    testCompile 'org.assertj:assertj-core:3.11.0'
+}

@@ -24,7 +24,7 @@
 
 package com.codigeria.loguerro.engine;
 
-import com.codigeria.loguerro.model.EventAction;
+import com.codigeria.loguerro.model.Event;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.junit.jupiter.api.Tag;
@@ -48,7 +48,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Tag("it")
 class FlinkEngineIT
 {
-    static List<EventAction> values = Collections.synchronizedList(new ArrayList<>());
+    static List<Event> values = Collections.synchronizedList(new ArrayList<>());
 
     @Test
     void reads_data_from_the_input_file()
@@ -59,7 +59,7 @@ class FlinkEngineIT
         String filePath = Paths.get(clazz.getResource("logfile").toURI())
                 .toAbsolutePath()
                 .toString();
-        SinkFunction<EventAction> sinkFunction = new TestSinkFunction();
+        SinkFunction<Event> sinkFunction = new TestSinkFunction();
         FlinkEngine.ConfigurationImpl configuration = new FlinkEngine.ConfigurationImpl(engineName, filePath);
         FlinkEngine engine = new FlinkEngine(
                 configuration,
@@ -75,10 +75,10 @@ class FlinkEngineIT
         assertThat(values).hasSize(6);
     }
 
-    static class TestSinkFunction implements SinkFunction<EventAction>
+    static class TestSinkFunction implements SinkFunction<Event>
     {
         @Override
-        public void invoke(EventAction value, Context context)
+        public void invoke(Event value, Context context)
         {
             values.add(value);
         }

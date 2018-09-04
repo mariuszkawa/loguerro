@@ -24,11 +24,14 @@
 
 package com.codigeria.loguerro.engine;
 
+import com.codigeria.loguerro.model.Event;
 import com.codigeria.loguerro.model.EventAction;
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
+import org.apache.flink.util.Collector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +46,7 @@ public final class FlinkEngine implements Engine
     private final Configuration configuration;
 
     private final StreamExecutionEnvironment environment;
-    private final SinkFunction<EventAction> sinkFunction;
+    private final SinkFunction<Event> sinkFunction;
 
     private final Logger logger;
 
@@ -59,7 +62,7 @@ public final class FlinkEngine implements Engine
     @VisibleForTesting
     FlinkEngine(Configuration configuration,
                 StreamExecutionEnvironment executionEnvironment,
-                SinkFunction<EventAction> sinkFunction)
+                SinkFunction<Event> sinkFunction)
     {
         this(
                 configuration,
@@ -72,7 +75,7 @@ public final class FlinkEngine implements Engine
     @VisibleForTesting
     FlinkEngine(Configuration configuration,
                 StreamExecutionEnvironment environment,
-                SinkFunction<EventAction> sinkFunction,
+                SinkFunction<Event> sinkFunction,
                 Logger logger)
     {
         this.configuration = checkNotNull(configuration);
@@ -86,6 +89,15 @@ public final class FlinkEngine implements Engine
     {
         environment.readTextFile(configuration.getFilePath())
                 .map(new DeserializeJsonMapFunction())
+                .keyBy(EventAction::getId)
+                .flatMap(new RichFlatMapFunction<EventAction, Event>()
+                {
+                    @Override
+                    public void flatMap(EventAction eventAction, Collector<Event> collector)
+                    {
+                        collector.collect(new Event(eventAction.getId()));
+                    }
+                })
                 .addSink(sinkFunction);
         logger.info("Starting Flink execution environment for the engine named '{}', reading from file '{}'...",
                 configuration.getEngineName(), configuration.getFilePath());

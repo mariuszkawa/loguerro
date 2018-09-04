@@ -48,6 +48,8 @@ dependencies {
     compile 'ch.qos.logback:logback-classic:1.2.3'
     compile "org.apache.flink:flink-java:${flinkVersion}"
     compile "org.apache.flink:flink-streaming-java_${scalaBinaryVersion}:${flinkVersion}"
+    compile 'com.google.code.gson:gson:2.8.5'
+
     runtime 'org.codehaus.groovy:groovy:2.5.2'
 
     testCompile 'org.junit.jupiter:junit-jupiter-api:5.2.0'

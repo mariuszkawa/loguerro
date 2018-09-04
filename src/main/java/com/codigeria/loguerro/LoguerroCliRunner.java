@@ -61,7 +61,7 @@ final class LoguerroCliRunner
     LoguerroCliRunner(List<String> arguments, Engine engine, Logger logger)
     {
         this.arguments = Collections.unmodifiableList(checkNotNull(arguments));
-         this.engine = checkNotNull(engine);
+        this.engine = checkNotNull(engine);
         this.logger = checkNotNull(logger);
     }
 

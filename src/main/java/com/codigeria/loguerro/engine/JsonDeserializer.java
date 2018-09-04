@@ -25,7 +25,6 @@
 package com.codigeria.loguerro.engine;
 
 import com.codigeria.loguerro.model.EventAction;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.configuration.Configuration;
@@ -57,17 +56,5 @@ final class JsonDeserializer extends RichMapFunction<String, EventAction>
     {
         logger.debug("Deserializing JSON object: {}", value);
         return gson.fromJson(value, EventAction.class);
-    }
-
-    @VisibleForTesting
-    void setGson(Gson gson)
-    {
-        this.gson = gson;
-    }
-
-    @VisibleForTesting
-    void setLogger(Logger logger)
-    {
-        this.logger = logger;
     }
 }

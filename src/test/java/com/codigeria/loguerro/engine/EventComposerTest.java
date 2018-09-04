@@ -123,8 +123,10 @@ class EventComposerTest
     {
         // Given
         AtomicBoolean answer = new AtomicBoolean(false);
-        EventAction startedEventAction = new EventAction("test_id", "STARTED", 1536088354300L);
-        EventAction finishedEventAction = new EventAction("test_id", "FINISHED", 1536088426190L);
+        EventAction startedEventAction = new EventAction("test_id", "STARTED", 1536088354300L,
+                "some_type", "some_host");
+        EventAction finishedEventAction = new EventAction("test_id", "FINISHED", 1536088426190L,
+                "some_type", "some_host");
         doReturn(true).when(state).contains(eq("STARTED"));
         doAnswer(invocation -> answer.get()).when(state).contains(eq("FINISHED"));
         doAnswer(invocation -> {
@@ -150,6 +152,8 @@ class EventComposerTest
                         .eventId("test_id")
                         .eventDuration(71890L)
                         .alert(true)
+                        .type("some_type")
+                        .host("some_host")
                         .build());
     }
 }

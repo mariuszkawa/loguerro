@@ -68,10 +68,11 @@ final class LoguerroCliRunner
     void run()
     {
         logger.debug("Running CLI runner...");
-        try {
-            engine.run();
-        } catch (EngineException e) {
-            logger.error("An exception caught while running the Loguerro engine", e);
-        }
+        // TODO
+//        try {
+//            engine.run();
+//        } catch (EngineException e) {
+//            logger.error("An exception caught while running the Loguerro engine", e);
+//        }
     }
 }

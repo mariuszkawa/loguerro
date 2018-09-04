@@ -27,6 +27,9 @@ package com.codigeria.loguerro.engine;
 import com.codigeria.loguerro.model.Event;
 import com.codigeria.loguerro.model.EventAction;
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.flink.api.common.functions.FlatMapFunction;
+import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
@@ -44,6 +47,9 @@ public final class FlinkEngine implements Engine
     private final Configuration configuration;
 
     private final StreamExecutionEnvironment environment;
+    private final MapFunction<String, EventAction> jsonDeserializer;
+    private final KeySelector<EventAction, String> keySelector;
+    private final FlatMapFunction<EventAction, Event> eventComposer;
     private final SinkFunction<Event> sinkFunction;
 
     private final Logger logger;
@@ -53,6 +59,9 @@ public final class FlinkEngine implements Engine
         this(
                 configuration,
                 StreamExecutionEnvironment.getExecutionEnvironment(),
+                new JsonDeserializer(),
+                EventAction::getId,
+                new EventComposer(),
                 new PrintSinkFunction<>()
         );
     }
@@ -60,11 +69,17 @@ public final class FlinkEngine implements Engine
     @VisibleForTesting
     FlinkEngine(Configuration configuration,
                 StreamExecutionEnvironment executionEnvironment,
+                MapFunction<String, EventAction> jsonDeserializer,
+                KeySelector<EventAction, String> keySelector,
+                FlatMapFunction<EventAction, Event> eventComposer,
                 SinkFunction<Event> sinkFunction)
     {
         this(
                 configuration,
                 executionEnvironment,
+                jsonDeserializer,
+                keySelector,
+                eventComposer,
                 sinkFunction,
                 LoggerFactory.getLogger(MethodHandles.lookup().lookupClass())
         );
@@ -73,11 +88,17 @@ public final class FlinkEngine implements Engine
     @VisibleForTesting
     FlinkEngine(Configuration configuration,
                 StreamExecutionEnvironment environment,
+                MapFunction<String, EventAction> jsonDeserializer,
+                KeySelector<EventAction, String> keySelector,
+                FlatMapFunction<EventAction, Event> eventComposer,
                 SinkFunction<Event> sinkFunction,
                 Logger logger)
     {
         this.configuration = checkNotNull(configuration);
         this.environment = checkNotNull(environment);
+        this.jsonDeserializer = checkNotNull(jsonDeserializer);
+        this.keySelector = checkNotNull(keySelector);
+        this.eventComposer = checkNotNull(eventComposer);
         this.sinkFunction = checkNotNull(sinkFunction);
         this.logger = checkNotNull(logger);
     }
@@ -86,9 +107,9 @@ public final class FlinkEngine implements Engine
     public void run() throws EngineException
     {
         environment.readTextFile(configuration.getFilePath())
-                .map(new JsonDeserializer())
-                .keyBy(EventAction::getId)
-                .flatMap(new EventComposer())
+                .map(jsonDeserializer)
+                .keyBy(keySelector)
+                .flatMap(eventComposer)
                 .addSink(sinkFunction);
         logger.info("Starting Flink execution environment for the engine named '{}', reading from file '{}'...",
                 configuration.getEngineName(), configuration.getFilePath());

@@ -25,6 +25,7 @@
 package com.codigeria.loguerro.engine;
 
 import com.codigeria.loguerro.model.Event;
+import com.codigeria.loguerro.model.EventAction;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.junit.jupiter.api.Tag;
@@ -65,6 +66,9 @@ class FlinkEngineIT
         FlinkEngine engine = new FlinkEngine(
                 configuration,
                 StreamExecutionEnvironment.getExecutionEnvironment(),
+                new JsonDeserializer(),
+                EventAction::getId,
+                new EventComposer(),
                 sinkFunction
         );
         Future<Boolean> finished = Executors.newSingleThreadExecutor().submit(() -> {

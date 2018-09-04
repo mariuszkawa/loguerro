@@ -24,10 +24,17 @@
 
 package com.codigeria.loguerro.engine;
 
+import com.codigeria.loguerro.model.Event;
+import com.codigeria.loguerro.model.EventAction;
+import org.apache.flink.api.common.functions.FlatMapFunction;
+import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.java.functions.KeySelector;
+import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.datastream.KeyedStream;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,13 +52,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @Tag("unit")
-@Disabled
 class FlinkEngineTest
 {
     @Mock
@@ -59,9 +66,21 @@ class FlinkEngineTest
     @Mock
     StreamExecutionEnvironment environment;
     @Mock
-    SinkFunction<String> sinkFunction;
+    MapFunction<String, EventAction> jsonDeserializer;
+    @Mock
+    KeySelector<EventAction, String> keySelector;
+    @Mock
+    FlatMapFunction<EventAction, Event> eventComposer;
+    @Mock
+    SinkFunction<Event> sinkFunction;
     @Mock
     DataStreamSource<String> dataSourceStream;
+    @Mock
+    SingleOutputStreamOperator<EventAction> singleOutputStreamOpertator;
+    @Mock
+    SingleOutputStreamOperator<Event> singleOutputStreamOpertatorEvent;
+    @Mock
+    KeyedStream<Object, Tuple> keyedStream;
     @Mock
     Logger logger;
 
@@ -84,7 +103,7 @@ class FlinkEngineTest
 
         // Then
         verify(environment, times(1)).readTextFile(eq(filePath));
-        verify(dataSourceStream, times(1)).addSink(eq(sinkFunction));
+        verify(singleOutputStreamOpertatorEvent, times(1)).addSink(eq(sinkFunction));
         verify(environment, times(1)).execute(eq(engineName));
         verify(logger, times(1)).info(
                 contains("Starting Flink execution environment"),
@@ -121,8 +140,11 @@ class FlinkEngineTest
 
     void setupMocks(String engineName, String filePath)
     {
-        when(configuration.getEngineName()).thenReturn(engineName);
-        when(configuration.getFilePath()).thenReturn(filePath);
-        when(environment.readTextFile(eq(filePath))).thenReturn(dataSourceStream);
+        doReturn(engineName).when(configuration).getEngineName();
+        doReturn(filePath).when(configuration).getFilePath();
+        doReturn(dataSourceStream).when(environment).readTextFile(eq(filePath));
+        doReturn(singleOutputStreamOpertator).when(dataSourceStream).map(any());
+        doReturn(keyedStream).when(singleOutputStreamOpertator).keyBy(any(KeySelector.class));
+        doReturn(singleOutputStreamOpertatorEvent).when(keyedStream).flatMap(any());
     }
 }

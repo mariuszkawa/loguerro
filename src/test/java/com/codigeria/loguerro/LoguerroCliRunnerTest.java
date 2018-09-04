@@ -24,7 +24,7 @@
 
 package com.codigeria.loguerro;
 
-import org.junit.jupiter.api.Disabled;
+import com.codigeria.loguerro.engine.Engine;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,13 +46,14 @@ class LoguerroCliRunnerTest
     @Mock
     List<String> arguments;
     @Mock
+    Engine engine;
+    @Mock
     Logger logger;
 
     @InjectMocks
     LoguerroCliRunner loguerroCliRunner;
 
     @Test
-    @Disabled
     void run___given_empty_arg_list___when_run_CLI_runner___then_log_the_event_at_debug_level()
     {
         // Given

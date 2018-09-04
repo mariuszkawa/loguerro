@@ -41,7 +41,7 @@ final class EventComposer extends RichFlatMapFunction<EventAction, Event>
     private transient MapState<String, EventAction> state;
 
     @Override
-    public void open(final Configuration parameters) throws Exception
+    public void open(Configuration parameters) throws Exception
     {
         super.open(parameters);
         if (state == null) {
@@ -84,7 +84,7 @@ final class EventComposer extends RichFlatMapFunction<EventAction, Event>
     }
 
     @VisibleForTesting
-    void setState(final MapState<String, EventAction> state)
+    void setState(MapState<String, EventAction> state)
     {
         this.state = state;
     }

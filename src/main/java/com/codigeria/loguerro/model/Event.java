@@ -27,14 +27,21 @@ package com.codigeria.loguerro.model;
 public final class Event
 {
     private final String id;
+    private final long duration;
 
-    public Event(String id)
+    public Event(String id, long duration)
     {
         this.id = id;
+        this.duration = duration;
     }
 
     public String getId()
     {
         return id;
+    }
+
+    public long getDuration()
+    {
+        return duration;
     }
 }

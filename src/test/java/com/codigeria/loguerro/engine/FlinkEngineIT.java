@@ -59,6 +59,7 @@ class FlinkEngineIT
         String filePath = Paths.get(clazz.getResource("logfile").toURI())
                 .toAbsolutePath()
                 .toString();
+        int expectedSize = 3;
         SinkFunction<Event> sinkFunction = new TestSinkFunction();
         FlinkEngine.ConfigurationImpl configuration = new FlinkEngine.ConfigurationImpl(engineName, filePath);
         FlinkEngine engine = new FlinkEngine(
@@ -71,8 +72,8 @@ class FlinkEngineIT
             return true;
         });
         assertThat(finished.get(3, SECONDS)).isTrue();
-        await().atMost(5, SECONDS).until(() -> values.size() == 6);
-        assertThat(values).hasSize(6);
+        await().atMost(5, SECONDS).until(() -> values.size() == expectedSize);
+        assertThat(values).hasSize(expectedSize);
     }
 
     static class TestSinkFunction implements SinkFunction<Event>

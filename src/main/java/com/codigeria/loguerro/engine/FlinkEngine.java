@@ -27,11 +27,9 @@ package com.codigeria.loguerro.engine;
 import com.codigeria.loguerro.model.Event;
 import com.codigeria.loguerro.model.EventAction;
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
-import org.apache.flink.util.Collector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,14 +88,7 @@ public final class FlinkEngine implements Engine
         environment.readTextFile(configuration.getFilePath())
                 .map(new JsonDeserializer())
                 .keyBy(EventAction::getId)
-                .flatMap(new RichFlatMapFunction<EventAction, Event>()
-                {
-                    @Override
-                    public void flatMap(EventAction eventAction, Collector<Event> collector)
-                    {
-                        collector.collect(new Event(eventAction.getId()));
-                    }
-                })
+                .flatMap(new EventComposer())
                 .addSink(sinkFunction);
         logger.info("Starting Flink execution environment for the engine named '{}', reading from file '{}'...",
                 configuration.getEngineName(), configuration.getFilePath());

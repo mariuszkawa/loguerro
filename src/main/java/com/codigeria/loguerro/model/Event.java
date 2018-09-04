@@ -27,12 +27,12 @@ package com.codigeria.loguerro.model;
 public final class Event
 {
     private final String eventId;
-    private final long duration;
+    private final long eventDuration;
 
-    public Event(String eventId, long duration)
+    public Event(String eventId, long eventDuration)
     {
         this.eventId = eventId;
-        this.duration = duration;
+        this.eventDuration = eventDuration;
     }
 
     public String getEventId()
@@ -40,8 +40,8 @@ public final class Event
         return eventId;
     }
 
-    public long getDuration()
+    public long getEventDuration()
     {
-        return duration;
+        return eventDuration;
     }
 }

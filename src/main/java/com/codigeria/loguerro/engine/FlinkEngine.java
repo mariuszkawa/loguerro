@@ -24,8 +24,8 @@
 
 package com.codigeria.loguerro.engine;
 
+import com.codigeria.loguerro.model.EventAction;
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
@@ -43,7 +43,7 @@ public final class FlinkEngine implements Engine
     private final Configuration configuration;
 
     private final StreamExecutionEnvironment environment;
-    private final SinkFunction<String> sinkFunction;
+    private final SinkFunction<EventAction> sinkFunction;
 
     private final Logger logger;
 
@@ -59,7 +59,7 @@ public final class FlinkEngine implements Engine
     @VisibleForTesting
     FlinkEngine(Configuration configuration,
                 StreamExecutionEnvironment executionEnvironment,
-                SinkFunction<String> sinkFunction)
+                SinkFunction<EventAction> sinkFunction)
     {
         this(
                 configuration,
@@ -72,7 +72,7 @@ public final class FlinkEngine implements Engine
     @VisibleForTesting
     FlinkEngine(Configuration configuration,
                 StreamExecutionEnvironment environment,
-                SinkFunction<String> sinkFunction,
+                SinkFunction<EventAction> sinkFunction,
                 Logger logger)
     {
         this.configuration = checkNotNull(configuration);
@@ -84,8 +84,9 @@ public final class FlinkEngine implements Engine
     @Override
     public void run() throws EngineException
     {
-        DataStreamSource<String> dataStream = environment.readTextFile(configuration.getFilePath());
-        dataStream.addSink(sinkFunction);
+        environment.readTextFile(configuration.getFilePath())
+                .map(new DeserializeJsonMapFunction())
+                .addSink(sinkFunction);
         logger.info("Starting Flink execution environment for the engine named '{}', reading from file '{}'...",
                 configuration.getEngineName(), configuration.getFilePath());
         try {

@@ -41,27 +41,27 @@ public final class EventAction
         this.hostname = hostname;
     }
 
-    String getId()
+    public String getId()
     {
         return id;
     }
 
-    String getState()
+    public String getState()
     {
         return state;
     }
 
-    long getTimestamp()
+    public long getTimestamp()
     {
         return timestamp;
     }
 
-    String getType()
+    public String getType()
     {
         return type;
     }
 
-    String getHostname()
+    public String getHostname()
     {
         return hostname;
     }

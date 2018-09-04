@@ -88,7 +88,7 @@ public final class FlinkEngine implements Engine
     public void run() throws EngineException
     {
         environment.readTextFile(configuration.getFilePath())
-                .map(new DeserializeJsonMapFunction())
+                .map(new JsonDeserializer())
                 .keyBy(EventAction::getId)
                 .flatMap(new RichFlatMapFunction<EventAction, Event>()
                 {

@@ -25,50 +25,49 @@
 package com.codigeria.loguerro.engine;
 
 import com.codigeria.loguerro.model.EventAction;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
+import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.configuration.Configuration;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.lang.invoke.MethodHandles;
 
-@Tag("unit")
-@ExtendWith(MockitoExtension.class)
-class DeserializeJsonMapFunctionTest
+final class JsonDeserializer extends RichMapFunction<String, EventAction>
 {
-    @Mock
-    Configuration configuration;
+    private transient Gson gson;
 
-    DeserializeJsonMapFunction deserializeJsonMapFunction;
+    private transient Logger logger;
 
-    @BeforeEach
-    void setup() throws Exception
+    @Override
+    public void open(Configuration parameters) throws Exception
     {
-        deserializeJsonMapFunction = new DeserializeJsonMapFunction();
-        deserializeJsonMapFunction.open(configuration);
+        super.open(parameters);
+        if (gson == null) {
+            gson = new Gson();
+        }
+        if (logger == null) {
+            logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+        }
     }
 
-    @Test
-    void map___given_JSON_string___when_map___then_produces_a_proper_Java_object()
+    @Override
+    public EventAction map(String value)
     {
-        EventAction eventAction = new EventAction(
-                "scsmbstgra",
-                "FINISHED",
-                1491377495217L,
-                "APPLICATION_LOG",
-                "12345"
-        );
-        String json = new Gson().toJson(eventAction);
+        logger.debug("Deserializing JSON object: {}", value);
+        return gson.fromJson(value, EventAction.class);
+    }
 
+    @VisibleForTesting
+    void setGson(Gson gson)
+    {
+        this.gson = gson;
+    }
 
-        EventAction result = deserializeJsonMapFunction.map(json);
-
-        assertThat(result)
-                .isNotNull()
-                .isEqualToComparingFieldByField(eventAction);
+    @VisibleForTesting
+    void setLogger(Logger logger)
+    {
+        this.logger = logger;
     }
 }

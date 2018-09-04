@@ -24,15 +24,33 @@
 
 package com.codigeria.loguerro.model;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
+
 public final class Event
 {
+    public static Builder newBuilder()
+    {
+        return new Builder();
+    }
+
     private final String eventId;
     private final long eventDuration;
+    private final String type;
+    private final String host;
+    private final boolean alert;
 
-    public Event(String eventId, long eventDuration)
+    private Event(String eventId,
+                  long eventDuration,
+                  String type,
+                  String host,
+                  boolean alert)
     {
         this.eventId = eventId;
         this.eventDuration = eventDuration;
+        this.type = type;
+        this.host = host;
+        this.alert = alert;
     }
 
     public String getEventId()
@@ -43,5 +61,74 @@ public final class Event
     public long getEventDuration()
     {
         return eventDuration;
+    }
+
+    public String getType()
+    {
+        return type;
+    }
+
+    public String getHost()
+    {
+        return host;
+    }
+
+    public boolean isAlert()
+    {
+        return alert;
+    }
+
+    public static final class Builder
+    {
+        private String eventId;
+        private long eventDuration = -1L;
+        private String type;
+        private String host;
+        private boolean alert;
+
+        private Builder()
+        {
+        }
+
+        public Builder eventId(String eventId)
+        {
+            checkArgument(isNotEmpty(eventId));
+            this.eventId = eventId;
+            return this;
+        }
+
+        public Builder eventDuration(long eventDuration)
+        {
+            checkArgument(eventDuration >= 0L);
+            this.eventDuration = eventDuration;
+            return this;
+        }
+
+        public Builder type(String type)
+        {
+            checkArgument(isNotEmpty(type));
+            this.type = type;
+            return this;
+        }
+
+        public Builder host(String host)
+        {
+            checkArgument(isNotEmpty(host));
+            this.host = host;
+            return this;
+        }
+
+        public Builder alert(boolean alert)
+        {
+            this.alert = alert;
+            return this;
+        }
+
+        public Event build()
+        {
+            checkArgument(isNotEmpty(eventId));
+            checkArgument(eventDuration >= 0L);
+            return new Event(eventId, eventDuration, type, host, alert);
+        }
     }
 }

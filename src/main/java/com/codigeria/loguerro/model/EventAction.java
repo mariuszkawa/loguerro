@@ -30,15 +30,15 @@ public final class EventAction
     private final String state;
     private final long timestamp;
     private final String type;
-    private final String hostname;
+    private final String host;
 
-    public EventAction(String id, String state, long timestamp, String type, String hostname)
+    public EventAction(String id, String state, long timestamp, String type, String host)
     {
         this.id = id;
         this.state = state;
         this.timestamp = timestamp;
         this.type = type;
-        this.hostname = hostname;
+        this.host = host;
     }
 
     public String getId()
@@ -61,8 +61,8 @@ public final class EventAction
         return type;
     }
 
-    public String getHostname()
+    public String getHost()
     {
-        return hostname;
+        return host;
     }
 }

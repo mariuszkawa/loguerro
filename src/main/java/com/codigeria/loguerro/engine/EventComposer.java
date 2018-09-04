@@ -27,6 +27,7 @@ package com.codigeria.loguerro.engine;
 import com.codigeria.loguerro.model.Event;
 import com.codigeria.loguerro.model.EventAction;
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.common.state.MapState;
 import org.apache.flink.api.common.state.MapStateDescriptor;
@@ -62,7 +63,20 @@ final class EventComposer extends RichFlatMapFunction<EventAction, Event>
         if (state.contains("STARTED") && state.contains("FINISHED")) {
             EventAction started = state.get("STARTED");
             EventAction finished = state.get("FINISHED");
-            collector.collect(new Event(started.getId(), finished.getTimestamp() - started.getTimestamp()));
+            long eventDuration = finished.getTimestamp() - started.getTimestamp();
+            boolean eventDurationLongerThan_4ms = eventDuration > 4L;
+            Event.Builder eventBuilder = Event.newBuilder()
+                    .eventId(started.getId())
+                    .eventDuration(eventDuration)
+                    .alert(eventDurationLongerThan_4ms);
+            if (StringUtils.isNotEmpty(started.getHost())) {
+                eventBuilder.host(started.getHost());
+            }
+            if (StringUtils.isNotEmpty(started.getType())) {
+                eventBuilder.type(started.getType());
+            }
+            Event event = eventBuilder.build();
+            collector.collect(event);
         }
     }
 

@@ -57,26 +57,29 @@ final class EventComposer extends RichFlatMapFunction<EventAction, Event>
     @Override
     public void flatMap(EventAction eventAction, Collector<Event> collector) throws Exception
     {
+        if (!"STARTED".equals(eventAction.getState()) && !"FINISHED".equals(eventAction.getState())) {
+            return;
+        }
         if (!state.contains(eventAction.getState())) {
             state.put(eventAction.getState(), eventAction);
-        }
-        if (state.contains("STARTED") && state.contains("FINISHED")) {
-            EventAction started = state.get("STARTED");
-            EventAction finished = state.get("FINISHED");
-            long eventDuration = finished.getTimestamp() - started.getTimestamp();
-            boolean eventDurationLongerThan_4ms = eventDuration > 4L;
-            Event.Builder eventBuilder = Event.newBuilder()
-                    .eventId(started.getId())
-                    .eventDuration(eventDuration)
-                    .alert(eventDurationLongerThan_4ms);
-            if (StringUtils.isNotEmpty(started.getHost())) {
-                eventBuilder.host(started.getHost());
+            if (state.contains("STARTED") && state.contains("FINISHED")) {
+                EventAction started = state.get("STARTED");
+                EventAction finished = state.get("FINISHED");
+                long eventDuration = finished.getTimestamp() - started.getTimestamp();
+                boolean eventDurationLongerThan_4ms = eventDuration > 4L;
+                Event.Builder eventBuilder = Event.newBuilder()
+                        .eventId(started.getId())
+                        .eventDuration(eventDuration)
+                        .alert(eventDurationLongerThan_4ms);
+                if (StringUtils.isNotEmpty(started.getHost())) {
+                    eventBuilder.host(started.getHost());
+                }
+                if (StringUtils.isNotEmpty(started.getType())) {
+                    eventBuilder.type(started.getType());
+                }
+                Event event = eventBuilder.build();
+                collector.collect(event);
             }
-            if (StringUtils.isNotEmpty(started.getType())) {
-                eventBuilder.type(started.getType());
-            }
-            Event event = eventBuilder.build();
-            collector.collect(event);
         }
     }
 

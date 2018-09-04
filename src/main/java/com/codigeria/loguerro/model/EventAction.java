@@ -32,6 +32,11 @@ public final class EventAction
     private final String type;
     private final String host;
 
+    public EventAction(String id, String state, long timestamp)
+    {
+        this(id, state, timestamp, null, null);
+    }
+
     public EventAction(String id, String state, long timestamp, String type, String host)
     {
         this.id = id;

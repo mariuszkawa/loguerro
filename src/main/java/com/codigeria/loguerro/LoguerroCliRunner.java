@@ -58,7 +58,7 @@ final class LoguerroCliRunner
     {
         this(
                 arguments,
-                System.err::println,
+                new DefaultConsolePrinter(),
                 System::exit,
                 LoggerFactory.getLogger(MethodHandles.lookup().lookupClass())
         );
@@ -99,9 +99,13 @@ final class LoguerroCliRunner
     {
         try {
             createEngine(filePath);
+            consolePrinter.log("The result will be written to a file called 'event.db' " +
+                    "in the current working directory. See 'loguerro.log' for application logs.");
+            consolePrinter.log(String.format("Reading the file from '%s'...", filePath));
             engine.run();
         } catch (EngineException e) {
             logger.error("An exception caught while running the Loguerro engine", e);
+            consolePrinter.error("An exception caught while running the Loguerro engine - see 'loguerro.log'.");
             applicationKiller.kill(STATUS_ERROR_ENGINE_FAILURE);
         }
     }
@@ -134,10 +138,27 @@ final class LoguerroCliRunner
     }
 
     @VisibleForTesting
-    @FunctionalInterface
     interface ConsolePrinter
     {
+        void log(String message);
+
         void error(String message);
+    }
+
+    @VisibleForTesting
+    static final class DefaultConsolePrinter implements ConsolePrinter
+    {
+        @Override
+        public void log(String message)
+        {
+            System.out.println(message);
+        }
+
+        @Override
+        public void error(String message)
+        {
+            System.err.println(message);
+        }
     }
 
     @VisibleForTesting
@@ -145,5 +166,6 @@ final class LoguerroCliRunner
     interface ApplicationKiller
     {
         void kill(int statusCode);
+
     }
 }

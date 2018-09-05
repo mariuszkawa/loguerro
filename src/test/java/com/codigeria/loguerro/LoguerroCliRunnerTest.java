@@ -126,8 +126,9 @@ class LoguerroCliRunnerTest
     void run___given_file_path_provided___when_run_CLI_runner___then_run_the_engine() throws EngineException
     {
         // Given
+        String filePath = "log_file.log";
         doReturn(1).when(arguments).size();
-        doReturn("log_file.log").when(arguments).get(eq(0));
+        doReturn(filePath).when(arguments).get(eq(0));
 
         // When
         loguerroCliRunner.run();
@@ -135,6 +136,9 @@ class LoguerroCliRunnerTest
         // Then
         verify(logger, times(1)).debug(eq("Running CLI runner..."));
         verify(engine, times(1)).run();
+        verify(consolePrinter).log(eq("The result will be written to a file called 'event.db' " +
+                "in the current working directory. See 'loguerro.log' for application logs."));
+        verify(consolePrinter).log(eq(String.format("Reading the file from '%s'...", filePath)));
         verifyNoMoreInteractions(logger, engine, consolePrinter, applicationKiller);
     }
 
@@ -143,8 +147,9 @@ class LoguerroCliRunnerTest
             throws EngineException
     {
         // Given
+        String filePath = "log_file.log";
         doReturn(1).when(arguments).size();
-        doReturn("log_file.log").when(arguments).get(eq(0));
+        doReturn(filePath).when(arguments).get(eq(0));
         EngineException exception = new EngineException("Illegal state!", new IllegalStateException());
         doThrow(exception).when(engine).run();
 
@@ -158,6 +163,11 @@ class LoguerroCliRunnerTest
                 eq("An exception caught while running the Loguerro engine"),
                 eq(exception)
         );
+        verify(consolePrinter).log(eq("The result will be written to a file called 'event.db' " +
+                "in the current working directory. See 'loguerro.log' for application logs."));
+        verify(consolePrinter).log(eq(String.format("Reading the file from '%s'...", filePath)));
+        verify(consolePrinter).error(eq("An exception caught while running the Loguerro engine - " +
+                "see 'loguerro.log'."));
         verify(applicationKiller).kill(eq(STATUS_ERROR_ENGINE_FAILURE));
         verifyNoMoreInteractions(logger, engine, consolePrinter, applicationKiller);
     }

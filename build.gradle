@@ -22,6 +22,15 @@
  * SOFTWARE.
  */
 
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.4'
+    }
+}
+
 plugins {
     id 'java'
 }
@@ -29,6 +38,7 @@ plugins {
 group 'com.codigeria.loguerro'
 version '0.0.1-SNAPSHOT'
 
+apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'java'
 
 sourceCompatibility = 1.8
@@ -51,7 +61,7 @@ dependencies {
     compile 'com.google.code.gson:gson:2.8.5'
     compile 'org.hibernate:hibernate-core:5.3.6.Final'
     compile 'org.hsqldb:hsqldb:2.4.1'
-    runtime 'org.codehaus.groovy:groovy:2.5.2'
+    compile 'org.codehaus.groovy:groovy:2.5.2'
 
     testCompile 'org.junit.jupiter:junit-jupiter-api:5.2.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.2.0'
@@ -63,4 +73,17 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'com.codigeria.loguerro.LoguerroMain'
+    }
+}
+
+shadowJar {
+    baseName = 'loguerro'
+    classifier = null
+    version = null
+    append 'reference.conf'
 }

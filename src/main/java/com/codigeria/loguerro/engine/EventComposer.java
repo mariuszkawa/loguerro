@@ -42,6 +42,9 @@ final class EventComposer extends RichFlatMapFunction<EventAction, Event>
 {
     private static final String STATE = "state";
 
+    private static final String STARTED = "STARTED";
+    private static final String FINISHED = "FINISHED";
+
     private transient MapState<String, EventAction> state;
 
     private transient Logger logger;
@@ -67,7 +70,7 @@ final class EventComposer extends RichFlatMapFunction<EventAction, Event>
     @Override
     public void flatMap(EventAction eventAction, Collector<Event> collector) throws Exception
     {
-        if (!"STARTED".equals(eventAction.getState()) && !"FINISHED".equals(eventAction.getState())) {
+        if (!STARTED.equals(eventAction.getState()) && !FINISHED.equals(eventAction.getState())) {
             logger.debug("Invalid incoming state of event action - the state was '{}' - skipping the event",
                     eventAction.getState());
             return;
@@ -85,9 +88,9 @@ final class EventComposer extends RichFlatMapFunction<EventAction, Event>
     private void handleIncomingNewEventAction(EventAction eventAction, Collector<Event> collector) throws Exception
     {
         state.put(eventAction.getState(), eventAction);
-        if (state.contains("STARTED") && state.contains("FINISHED")) {
-            EventAction started = state.get("STARTED");
-            EventAction finished = state.get("FINISHED");
+        if (state.contains(STARTED) && state.contains(FINISHED)) {
+            EventAction started = state.get(STARTED);
+            EventAction finished = state.get(FINISHED);
             long eventDuration = finished.getTimestamp() - started.getTimestamp();
             boolean eventDurationLongerThan_4ms = eventDuration > 4L;
             Event.Builder eventBuilder = Event.newBuilder()

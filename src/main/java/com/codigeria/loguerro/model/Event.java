@@ -24,6 +24,8 @@
 
 package com.codigeria.loguerro.model;
 
+import com.google.common.base.MoreObjects;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
@@ -78,6 +80,29 @@ public final class Event
         return alert;
     }
 
+    @Override
+    public String toString()
+    {
+        return MoreObjects.toStringHelper(this)
+                .add("eventId", eventId)
+                .add("eventDuration", eventDuration)
+                .add("type", type)
+                .add("host", host)
+                .add("alert", alert)
+                .toString();
+    }
+
+    public Builder toBuilder()
+    {
+        return new Builder(
+                eventId,
+                eventDuration,
+                type,
+                host,
+                alert
+        );
+    }
+
     public static final class Builder
     {
         private String eventId;
@@ -88,6 +113,15 @@ public final class Event
 
         private Builder()
         {
+        }
+
+        private Builder(String eventId, long eventDuration, String type, String host, boolean alert)
+        {
+            this.eventId = eventId;
+            this.eventDuration = eventDuration;
+            this.type = type;
+            this.host = host;
+            this.alert = alert;
         }
 
         public Builder eventId(String eventId)
@@ -129,6 +163,18 @@ public final class Event
             checkArgument(isNotEmpty(eventId));
             checkArgument(eventDuration >= 0L);
             return new Event(eventId, eventDuration, type, host, alert);
+        }
+
+        @Override
+        public String toString()
+        {
+            return MoreObjects.toStringHelper(this)
+                    .add("eventId", eventId)
+                    .add("eventDuration", eventDuration)
+                    .add("type", type)
+                    .add("host", host)
+                    .add("alert", alert)
+                    .toString();
         }
     }
 }

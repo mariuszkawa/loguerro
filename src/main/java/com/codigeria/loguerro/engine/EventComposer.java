@@ -33,6 +33,10 @@ import org.apache.flink.api.common.state.MapState;
 import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.util.Collector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.lang.invoke.MethodHandles;
 
 final class EventComposer extends RichFlatMapFunction<EventAction, Event>
 {
@@ -40,10 +44,13 @@ final class EventComposer extends RichFlatMapFunction<EventAction, Event>
 
     private transient MapState<String, EventAction> state;
 
+    private transient Logger logger;
+
     @Override
     public void open(Configuration parameters) throws Exception
     {
         super.open(parameters);
+        logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
         if (state == null) {
             MapStateDescriptor<String, EventAction> descriptor = new MapStateDescriptor<>(
                     STATE,
@@ -51,6 +58,9 @@ final class EventComposer extends RichFlatMapFunction<EventAction, Event>
                     EventAction.class
             );
             state = getRuntimeContext().getMapState(descriptor);
+            logger.debug("A new map state named '{}' initialized", STATE);
+        } else {
+            logger.debug("A map state provided externally");
         }
     }
 
@@ -58,28 +68,43 @@ final class EventComposer extends RichFlatMapFunction<EventAction, Event>
     public void flatMap(EventAction eventAction, Collector<Event> collector) throws Exception
     {
         if (!"STARTED".equals(eventAction.getState()) && !"FINISHED".equals(eventAction.getState())) {
+            logger.debug("Invalid incoming state of event action - the state was '{}' - skipping the event",
+                    eventAction.getState());
             return;
         }
+        logger.debug("Event action came in with the state '{}', id '{}'",
+                eventAction.getState(), eventAction.getId());
         if (!state.contains(eventAction.getState())) {
-            state.put(eventAction.getState(), eventAction);
-            if (state.contains("STARTED") && state.contains("FINISHED")) {
-                EventAction started = state.get("STARTED");
-                EventAction finished = state.get("FINISHED");
-                long eventDuration = finished.getTimestamp() - started.getTimestamp();
-                boolean eventDurationLongerThan_4ms = eventDuration > 4L;
-                Event.Builder eventBuilder = Event.newBuilder()
-                        .eventId(started.getId())
-                        .eventDuration(eventDuration)
-                        .alert(eventDurationLongerThan_4ms);
-                if (StringUtils.isNotEmpty(started.getHost())) {
-                    eventBuilder.host(started.getHost());
-                }
-                if (StringUtils.isNotEmpty(started.getType())) {
-                    eventBuilder.type(started.getType());
-                }
-                Event event = eventBuilder.build();
-                collector.collect(event);
+            handleIncomingNewEventAction(eventAction, collector);
+        } else {
+            logger.debug("Event action with the state '{}', id '{}' rejected - already included in the map state",
+                    eventAction.getState(), eventAction.getId());
+        }
+    }
+
+    private void handleIncomingNewEventAction(EventAction eventAction, Collector<Event> collector) throws Exception
+    {
+        state.put(eventAction.getState(), eventAction);
+        if (state.contains("STARTED") && state.contains("FINISHED")) {
+            EventAction started = state.get("STARTED");
+            EventAction finished = state.get("FINISHED");
+            long eventDuration = finished.getTimestamp() - started.getTimestamp();
+            boolean eventDurationLongerThan_4ms = eventDuration > 4L;
+            Event.Builder eventBuilder = Event.newBuilder()
+                    .eventId(started.getId())
+                    .eventDuration(eventDuration)
+                    .alert(eventDurationLongerThan_4ms);
+            if (StringUtils.isNotEmpty(started.getHost())) {
+                eventBuilder.host(started.getHost());
             }
+            if (StringUtils.isNotEmpty(started.getType())) {
+                eventBuilder.type(started.getType());
+            }
+            Event event = eventBuilder.build();
+            if (logger.isDebugEnabled()) {
+                logger.debug("Collecting a new event: {}", event);
+            }
+            collector.collect(event);
         }
     }
 

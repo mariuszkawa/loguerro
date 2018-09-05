@@ -43,11 +43,9 @@ final class JsonDeserializer extends RichMapFunction<String, EventAction>
     public void open(Configuration parameters) throws Exception
     {
         super.open(parameters);
+        logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
         if (gson == null) {
             gson = new Gson();
-        }
-        if (logger == null) {
-            logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
         }
     }
 

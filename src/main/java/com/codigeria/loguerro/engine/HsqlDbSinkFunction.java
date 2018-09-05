@@ -36,12 +36,14 @@ import org.hibernate.service.ServiceRegistry;
 
 public class HsqlDbSinkFunction extends RichSinkFunction<Event>
 {
-    private static final SessionFactory sessionFactory;
-    private static final ServiceRegistry serviceRegistry;
+    private transient SessionFactory sessionFactory;
+    private transient ServiceRegistry serviceRegistry;
 
     private Session session;
 
-    static {
+    @Override
+    public void open(Configuration parameters)
+    {
         try {
             org.hibernate.cfg.Configuration configuration = new org.hibernate.cfg.Configuration();
             configuration.addAnnotatedClass(Event.class);
@@ -52,11 +54,6 @@ public class HsqlDbSinkFunction extends RichSinkFunction<Event>
         } catch (Throwable throwable) {
             throw new ExceptionInInitializerError(throwable);
         }
-    }
-
-    @Override
-    public void open(Configuration parameters)
-    {
         session = sessionFactory.openSession();
     }
 
@@ -65,6 +62,11 @@ public class HsqlDbSinkFunction extends RichSinkFunction<Event>
     {
         if (session != null) {
             session.close();
+            session = null;
+        }
+        if (sessionFactory != null) {
+            sessionFactory.close();
+            sessionFactory = null;
         }
     }
 

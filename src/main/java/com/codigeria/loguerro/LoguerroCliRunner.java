@@ -40,39 +40,110 @@ import static com.google.common.base.Preconditions.checkNotNull;
 final class LoguerroCliRunner
 {
     private static final String DEFAULT_ENGINE_NAME = "Loguerro Streaming Engine";
-    private static final String DEFAULT_FILE_PATH = "logfile.log";
+
+    @VisibleForTesting
+    static final int STATUS_ERROR_INVALID_USAGE = 254;
+    @VisibleForTesting
+    static final int STATUS_ERROR_ENGINE_FAILURE = 255;
 
     private final List<String> arguments;
-
-    private final Engine engine;
+    private final ConsolePrinter consolePrinter;
+    private final ApplicationKiller applicationKiller;
 
     private final Logger logger;
+
+    private Engine engine;
 
     LoguerroCliRunner(List<String> arguments)
     {
         this(
                 arguments,
-                new FlinkEngine(new FlinkEngine.ConfigurationImpl(DEFAULT_ENGINE_NAME, DEFAULT_FILE_PATH)),
+                System.err::println,
+                System::exit,
                 LoggerFactory.getLogger(MethodHandles.lookup().lookupClass())
         );
     }
 
     @VisibleForTesting
-    LoguerroCliRunner(List<String> arguments, Engine engine, Logger logger)
+    LoguerroCliRunner(List<String> arguments,
+                      ConsolePrinter consolePrinter,
+                      ApplicationKiller applicationKiller,
+                      Logger logger)
     {
         this.arguments = Collections.unmodifiableList(checkNotNull(arguments));
-        this.engine = checkNotNull(engine);
+        this.consolePrinter = checkNotNull(consolePrinter);
+        this.applicationKiller = checkNotNull(applicationKiller);
         this.logger = checkNotNull(logger);
     }
 
     void run()
     {
         logger.debug("Running CLI runner...");
-        // TODO
-//        try {
-//            engine.run();
-//        } catch (EngineException e) {
-//            logger.error("An exception caught while running the Loguerro engine", e);
-//        }
+        if (arguments.size() == 1) {
+            interpretSingleArgument(arguments.get(0));
+        } else {
+            reportInvalidNumberOfParameters();
+        }
+    }
+
+    private void interpretSingleArgument(String argument)
+    {
+        if ("--help".equals(argument) || "-h".equals(argument)) {
+            printUsage();
+        } else {
+            runEngine(argument);
+        }
+    }
+
+    private void runEngine(String filePath)
+    {
+        try {
+            createEngine(filePath);
+            engine.run();
+        } catch (EngineException e) {
+            logger.error("An exception caught while running the Loguerro engine", e);
+            applicationKiller.kill(STATUS_ERROR_ENGINE_FAILURE);
+        }
+    }
+
+    private void reportInvalidNumberOfParameters()
+    {
+        consolePrinter.error("Invalid number of parameters.");
+        printUsage();
+        applicationKiller.kill(STATUS_ERROR_INVALID_USAGE);
+    }
+
+    private void printUsage()
+    {
+        consolePrinter.error("Usage: loguerro <input_file_path>\n");
+        consolePrinter.error("    where:\n");
+        consolePrinter.error("    <input_file_path> - a path pointing to a JSON file containing logged events");
+    }
+
+    private void createEngine(String argument)
+    {
+        if (engine == null) {
+            engine = new FlinkEngine(new FlinkEngine.ConfigurationImpl(DEFAULT_ENGINE_NAME, argument));
+        }
+    }
+
+    @VisibleForTesting
+    void setEngine(Engine engine)
+    {
+        this.engine = engine;
+    }
+
+    @VisibleForTesting
+    @FunctionalInterface
+    interface ConsolePrinter
+    {
+        void error(String message);
+    }
+
+    @VisibleForTesting
+    @FunctionalInterface
+    interface ApplicationKiller
+    {
+        void kill(int statusCode);
     }
 }

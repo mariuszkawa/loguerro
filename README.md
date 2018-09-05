@@ -13,24 +13,28 @@ to a HSQL-based file database.
 
    `cd loguerro`
    
-3. Generate a runnable JAR by executing this:
+3. Launch tests to verify the correctness:
+
+   `./gradlew test`
+
+4. Generate a runnable JAR by executing this:
 
    `./gradlew shadowJar`
    
    It may take a while (10-20 seconds).
    
-4. The JAR file is located in `build/libs/loguerro.jar`:
+5. The JAR file is located in `build/libs/loguerro.jar`:
 
    `cd build/libs`
    
-5. Copy the input file into that directory. Alternatively, you can provide the full path to any location 
+6. Copy the input file into that directory. Alternatively, you can provide the full path to any location 
    on your hard drive.
 
-6. Execute the application. Issue a command (provided that the input file name is `my_input_file.log`):
+7. Execute the application. Issue a command (provided that the input file name is `my_input_file.log`):
 
    `java -jar loguerro.jar my_input_file.log`
    
-7. If the execution finishes successfully, your current directory should contain a couple of event.db.* files:
+8. If the execution finishes successfully, your current directory should contain a couple of event.db.* files:
 
    - `event.db.log`
    - `event.db.properties`

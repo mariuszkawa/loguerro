@@ -22,10 +22,12 @@
  * SOFTWARE.
  */
 
-appender("CONSOLE", ConsoleAppender) {
+appender("FILE", FileAppender) {
+    file = 'loguerro.log'
+    append = false
     encoder(PatternLayoutEncoder) {
         pattern = "%date{yyyy-MM-dd'T'HH:mm:ss.SSSZ} %level [%thread] %logger - %msg%n"
     }
 }
 
-root(INFO, ["CONSOLE"])
+root(INFO, ["FILE"])

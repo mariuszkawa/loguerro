@@ -31,7 +31,6 @@ import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,7 +61,7 @@ public final class FlinkEngine implements Engine
                 new JsonDeserializer(),
                 EventAction::getId,
                 new EventComposer(),
-                new PrintSinkFunction<>()
+                new HsqlDbSinkFunction()
         );
     }
 

@@ -26,21 +26,44 @@ package com.codigeria.loguerro.model;
 
 import com.google.common.base.MoreObjects;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+import java.util.Objects;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
-public final class Event
+@Entity
+@Table(name = "event")
+public class Event
 {
     public static Builder newBuilder()
     {
         return new Builder();
     }
 
-    private final String eventId;
-    private final long eventDuration;
-    private final String type;
-    private final String host;
-    private final boolean alert;
+    @Id
+    @Column(name = "event_id")
+    private String eventId;
+
+    @Column(name = "event_duration")
+    private long eventDuration;
+
+    @Column(name = "type")
+    private String type;
+
+    @Column(name = "host")
+    private String host;
+
+    @Column(name = "alert")
+    private boolean alert;
+
+    Event()
+    {
+    }
 
     private Event(String eventId,
                   long eventDuration,
@@ -80,6 +103,31 @@ public final class Event
         return alert;
     }
 
+    void setEventId(String eventId)
+    {
+        this.eventId = eventId;
+    }
+
+    void setEventDuration(long eventDuration)
+    {
+        this.eventDuration = eventDuration;
+    }
+
+    void setType(String type)
+    {
+        this.type = type;
+    }
+
+    void setHost(String host)
+    {
+        this.host = host;
+    }
+
+    void setAlert(boolean alert)
+    {
+        this.alert = alert;
+    }
+
     @Override
     public String toString()
     {
@@ -90,6 +138,21 @@ public final class Event
                 .add("host", host)
                 .add("alert", alert)
                 .toString();
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Event event = (Event) o;
+        return Objects.equals(eventId, event.eventId);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(eventId);
     }
 
     public Builder toBuilder()

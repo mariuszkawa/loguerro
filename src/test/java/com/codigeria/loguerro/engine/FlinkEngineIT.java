@@ -26,7 +26,9 @@ package com.codigeria.loguerro.engine;
 
 import com.codigeria.loguerro.model.Event;
 import com.codigeria.loguerro.model.EventAction;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -35,6 +37,7 @@ import java.lang.invoke.MethodHandles;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -61,7 +64,7 @@ class FlinkEngineIT
                 .toAbsolutePath()
                 .toString();
         int expectedSize = 3;
-        SinkFunction<Event> sinkFunction = new TestSinkFunction();
+        SinkFunction<Event> sinkFunction = new TestSinkFunction(new HsqlDbSinkFunction());
         FlinkEngine.ConfigurationImpl configuration = new FlinkEngine.ConfigurationImpl(engineName, filePath);
         FlinkEngine engine = new FlinkEngine(
                 configuration,
@@ -77,15 +80,58 @@ class FlinkEngineIT
         });
         assertThat(finished.get(3, SECONDS)).isTrue();
         await().atMost(5, SECONDS).until(() -> values.size() == expectedSize);
-        assertThat(values).hasSize(expectedSize);
+        assertThat(values)
+                .hasSize(expectedSize)
+                .hasSameElementsAs(Arrays.asList(
+                        Event.newBuilder()
+                                .eventId("scsmbstgra")
+                                .eventDuration(5L)
+                                .alert(true)
+                                .type("APPLICATION_LOG")
+                                .host("12345")
+                                .build(),
+                        Event.newBuilder()
+                                .eventId("scsmbstgrb")
+                                .eventDuration(3L)
+                                .alert(false)
+                                .build(),
+                        Event.newBuilder()
+                                .eventId("scsmbstgrc")
+                                .eventDuration(8L)
+                                .alert(true)
+                                .build()
+                ));
+
     }
 
-    static class TestSinkFunction implements SinkFunction<Event>
+    static class TestSinkFunction extends RichSinkFunction<Event>
     {
-        @Override
-        public void invoke(Event value, Context context)
+        final HsqlDbSinkFunction hsqlDbSinkFunction;
+
+        TestSinkFunction(HsqlDbSinkFunction hsqlDbSinkFunction)
         {
-            values.add(value);
+            this.hsqlDbSinkFunction = hsqlDbSinkFunction;
+        }
+
+        @Override
+        public void open(Configuration parameters) throws Exception
+        {
+            super.open(parameters);
+            hsqlDbSinkFunction.open(parameters);
+        }
+
+        @Override
+        public void close() throws Exception
+        {
+            super.close();
+            hsqlDbSinkFunction.close();
+        }
+
+        @Override
+        public void invoke(Event event, Context context)
+        {
+            values.add(event);
+            hsqlDbSinkFunction.invoke(event, context);
         }
     }
 }

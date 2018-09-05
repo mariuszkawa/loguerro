@@ -40,10 +40,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeoutException;
 
 import static com.jayway.awaitility.Awaitility.await;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -55,8 +51,7 @@ class FlinkEngineIT
     static List<Event> values = Collections.synchronizedList(new ArrayList<>());
 
     @Test
-    void reads_data_from_the_input_file()
-            throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
+    void reads_data_from_the_input_file() throws URISyntaxException, EngineException
     {
         Class<?> clazz = MethodHandles.lookup().lookupClass();
         String engineName = String.format("IT Test: %s", clazz);
@@ -74,11 +69,7 @@ class FlinkEngineIT
                 new EventComposer(),
                 sinkFunction
         );
-        Future<Boolean> finished = Executors.newSingleThreadExecutor().submit(() -> {
-            engine.run();
-            return true;
-        });
-        assertThat(finished.get(3, SECONDS)).isTrue();
+        engine.run();
         await().atMost(5, SECONDS).until(() -> values.size() == expectedSize);
         assertThat(values)
                 .hasSize(expectedSize)
